@@ -1231,3 +1231,172 @@
   color: #e74c3c;
   font-weight: 600;
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+   MOBILE — max-width: 640px
+   ═══════════════════════════════════════════════════════════════════════════════ */
+@media (max-width: 640px) {
+
+  /* ── Global ── */
+  html { font-size: 14px; }
+
+  /* ── Setup screen ── */
+  .setup-card { padding: 28px 20px; }
+  .setup-title { font-size: 22px; }
+  .btn--start { font-size: 15px; padding: 12px 20px; }
+  .btn--practice-mode,
+  .btn--competitive-mode { font-size: 13px; padding: 9px 16px; }
+
+  /* ── Game header ── */
+  .game-header { padding: 8px 12px; gap: 6px; }
+  .header-brand { font-size: 13px; }
+  .header-center { gap: 6px; }
+  .header-hand { display: none; }
+  .header-phase { font-size: 12px; padding: 2px 7px; }
+  .header-blinds { display: none; }
+  .header-right { min-width: unset; gap: 5px; }
+  .your-turn-badge { font-size: 11px; padding: 2px 7px; }
+
+  /* ── Table felt — shrink radius so it fits portrait ── */
+  .table-wrap { padding: 8px; }
+  .table-felt {
+    border-radius: 60px;
+    border-width: 6px;
+    min-height: 340px;
+  }
+
+  /* ── Seats — smaller on mobile ── */
+  .seat { min-width: 72px; max-width: 100px; padding: 5px 7px; }
+  .seat--human { min-width: 100px; }
+  .seat-name { font-size: 11px; }
+  .seat-position { font-size: 10px; padding: 1px 5px; margin-bottom: 2px; }
+  .seat-chips { font-size: 11px; }
+  .chip-count { font-size: 11px; }
+  .card { width: 26px; height: 38px; border-radius: 3px; }
+  .card-rank { font-size: 10px; }
+  .card-suit { font-size: 9px; }
+  .card--large { width: 38px; height: 54px; }
+  .card--large .card-rank { font-size: 15px; }
+  .card--large .card-suit { font-size: 13px; }
+  .card--xlarge { width: 52px; height: 74px; }
+  .card--xlarge .card-rank { font-size: 20px; }
+  .card--xlarge .card-suit { font-size: 17px; }
+  .seat-cards { min-height: 32px; gap: 3px; margin: 3px 0; }
+  .seat-cards-empty { min-height: 32px; }
+  .badge { font-size: 9px; padding: 1px 4px; }
+  .tag   { font-size: 9px; padding: 1px 4px; }
+
+  /* ── Community cards ── */
+  .community-cards { gap: 4px; }
+  .pot-amount { font-size: 15px; }
+  .pot-display { padding: 4px 10px; gap: 6px; }
+
+  /* ── Controls row ── */
+  .controls-row { padding: 8px 10px 12px; gap: 6px; }
+
+  /* ── Action buttons — big tap targets ── */
+  .action-buttons { gap: 6px; flex-wrap: nowrap; }
+  .btn { padding: 12px 16px; font-size: 14px; }
+  .btn--fold, .btn--check, .btn--call, .btn--raise, .btn--allin {
+    padding: 13px 14px;
+    font-size: 13px;
+  }
+
+  /* ── Raise panel ── */
+  .raise-panel { padding: 10px 12px; }
+  .raise-inputs { flex-direction: column; align-items: stretch; }
+  .raise-input { width: 100%; }
+
+  /* ── Action log — horizontal scroll ── */
+  .action-log { flex-wrap: nowrap; overflow-x: auto; justify-content: flex-start; padding-bottom: 4px; }
+
+  /* ── Chip stacks — smaller ── */
+  .chip-token { width: 18px; height: 18px; border-width: 2px; }
+  .chip-amount { font-size: 9px; }
+
+  /* ── Practice screen ── */
+  .practice-screen--active { height: auto; min-height: 100vh; overflow: auto; }
+  .practice-header { padding: 8px 12px; gap: 8px; flex-wrap: wrap; }
+  .practice-title { font-size: 14px; }
+  .practice-stats { font-size: 12px; }
+
+  /* Stack chart above center on mobile */
+  .practice-body {
+    flex-direction: column;
+    overflow: auto;
+    height: auto;
+  }
+  .practice-left {
+    border-right: none;
+    border-bottom: 1px solid #ffffff10;
+    padding: 12px;
+  }
+  .practice-center {
+    padding: 16px 12px;
+    gap: 14px;
+    justify-content: flex-start;
+  }
+  .comp-play-banner, .practice-position-banner { max-width: 100%; }
+
+  /* Range chart — full width on mobile */
+  .range-grid { width: min(calc(100vw - 24px), 420px); }
+  .range-cell { font-size: 6px; border-radius: 2px; }
+
+  /* ── Competitive level select ── */
+  .comp-screen--levels,
+  .comp-screen--playing { height: auto; min-height: 100vh; overflow: auto; }
+
+  .comp-levels-body { flex-direction: column; height: auto; overflow: visible; }
+  .comp-grid {
+    width: 100%;
+    grid-template-columns: repeat(8, 1fr);
+    gap: 4px;
+    padding: 10px;
+  }
+  .level-btn { min-height: 48px; }
+  .level-num { font-size: 13px; }
+  .level-hands { font-size: 9px; }
+
+  .comp-lb-panel { border-left: none; border-top: 1px solid #ffffff10; padding: 14px; }
+
+  /* ── Competitive playing — stack vertically ── */
+  .comp-play-body { flex-direction: column; overflow: auto; height: auto; }
+  .comp-play-sidebar {
+    width: 100%;
+    border-right: none;
+    border-bottom: 1px solid #ffffff10;
+  }
+  .comp-play-sidebar--right {
+    border-left: none;
+    border-top: 1px solid #ffffff10;
+  }
+  .comp-play-sidebar .comp-grid {
+    grid-template-columns: repeat(8, 1fr);
+    width: 100%;
+    padding: 8px;
+  }
+  .comp-play-center {
+    padding: 16px 12px;
+    gap: 14px;
+    justify-content: flex-start;
+  }
+  .comp-action-buttons { gap: 8px; flex-wrap: wrap; }
+  .comp-action-btn { font-size: 15px !important; padding: 12px 20px !important; min-width: 90px; }
+
+  /* ── Practice card (start screen) ── */
+  .practice-card { padding: 24px 16px; }
+  .practice-categories { gap: 6px; }
+  .cat-btn { font-size: 12px; padding: 5px 10px; }
+
+  /* ── Competitive name entry ── */
+  .comp-name-input { font-size: 16px; }
+
+  /* ── Competitive playing header ── */
+  .comp-play-header { padding: 8px 12px; gap: 8px; }
+  .comp-score-num { font-size: 20px; }
+
+  /* ── Results screen ── */
+  .comp-result-num { font-size: 42px; }
+  .modal { padding: 20px 16px; }
+  .comp-result-actions { gap: 6px; }
+}
