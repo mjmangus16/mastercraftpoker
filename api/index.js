@@ -504,7 +504,7 @@ app.post('/api/competitive/score', (req, res) => {
 // Serve built React app in production
 if (process.env.NODE_ENV === "production") {
   app.use(express.static(path.join(__dirname, "../client/dist")));
-  app.get("*", (_req, res) => {
+  app.get(/(.*)/, (_req, res) => {
     res.sendFile(path.join(__dirname, "../client/dist/index.html"));
   });
 }
