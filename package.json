@@ -2,7 +2,7 @@
   "name": "mastercraft-poker",
   "version": "1.0.0",
   "scripts": {
-    "build": "cd api && npm install && cd ../client && npm install && npm run build",
+    "build": "cd api && npm install && cd ../client && npm install --include=dev && npm run build",
     "start": "node api/index.js"
   },
   "engines": {
