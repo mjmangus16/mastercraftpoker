@@ -19,6 +19,7 @@ const ACTION_LABELS = { raise: 'Raise', allin: 'All-In', call: 'Call', fold: 'Fo
 
 function LevelGrid({ maxUnlocked, leaderboard, playerName, selectedLevel, onSelect, activeLevel }) {
   function playerBest(lvl) {
+    if (!playerName) return null;
     const entries = leaderboard[String(lvl)] || [];
     const mine = entries.filter(e => e.name.toLowerCase() === playerName.toLowerCase());
     return mine.length ? mine[0] : null;
@@ -36,12 +37,12 @@ function LevelGrid({ maxUnlocked, leaderboard, playerName, selectedLevel, onSele
             key={lvl.number}
             className={[
               'level-btn',
-              locked    ? 'level-btn--locked'   : '',
-              perfect   ? 'level-btn--complete'  : '',
-              isActive  ? 'level-btn--active'    : '',
+              locked   ? 'level-btn--locked'  : '',
+              perfect  ? 'level-btn--complete' : '',
+              isActive ? 'level-btn--active'   : '',
               selectedLevel === lvl.number ? 'level-btn--selected' : '',
             ].filter(Boolean).join(' ')}
-            onClick={() => !locked && onSelect(lvl.number)}
+            onClick={() => onSelect(lvl.number)}
             title={locked
               ? `Complete level ${lvl.number - 1} with 100% to unlock`
               : `Level ${lvl.number} — ${lvl.hands} hands`}
@@ -79,6 +80,9 @@ function LeaderboardPanel({ lbLevel, leaderboard, playerName, maxUnlocked, onPla
             Play →
           </button>
         )}
+        {onPlay && locked && (
+          <span className="comp-lb-locked-msg">🔒 Complete level {lbLevel - 1} with 100% to unlock</span>
+        )}
       </div>
       {lbEntries.length === 0 ? (
         <p className="comp-lb-empty">No scores yet. Be the first!</p>
@@ -89,7 +93,7 @@ function LeaderboardPanel({ lbLevel, leaderboard, playerName, maxUnlocked, onPla
           </thead>
           <tbody>
             {lbEntries.map((e, i) => (
-              <tr key={i} className={e.name.toLowerCase() === playerName.toLowerCase() ? 'lb-row--mine' : ''}>
+              <tr key={i} className={playerName && e.name.toLowerCase() === playerName.toLowerCase() ? 'lb-row--mine' : ''}>
                 <td>{i + 1}</td>
                 <td>{e.name}</td>
                 <td>
@@ -107,43 +111,7 @@ function LeaderboardPanel({ lbLevel, leaderboard, playerName, maxUnlocked, onPla
   );
 }
 
-// ── Name entry ────────────────────────────────────────────────────────────────
-
-function NameEntry({ onSubmit, onExit }) {
-  const [name, setName] = useState('');
-  return (
-    <div className="comp-screen">
-      <div className="practice-card">
-        <button className="practice-exit" onClick={onExit}>← Back</button>
-        <h2 className="practice-title" style={{ color: '#e74c3c' }}>Competitive Mode</h2>
-        <p className="practice-desc">
-          No charts. No hints. Just you and the cards.<br />
-          Complete each level with 100% to unlock the next.
-        </p>
-        <label className="comp-name-label">Your name</label>
-        <input
-          className="comp-name-input"
-          placeholder="Enter name…"
-          maxLength={24}
-          value={name}
-          onChange={e => setName(e.target.value)}
-          onKeyDown={e => e.key === 'Enter' && name.trim() && onSubmit(name.trim())}
-          autoFocus
-        />
-        <button
-          className="btn btn--start"
-          style={{ background: '#922b21' }}
-          disabled={!name.trim()}
-          onClick={() => onSubmit(name.trim())}
-        >
-          Continue →
-        </button>
-      </div>
-    </div>
-  );
-}
-
-// ── Level select ──────────────────────────────────────────────────────────────
+// ── Level select (public — no name required) ──────────────────────────────────
 
 function LevelSelect({ playerName, maxUnlocked, leaderboard, onPlay, onExit }) {
   const [lbLevel, setLbLevel] = useState(1);
@@ -153,7 +121,10 @@ function LevelSelect({ playerName, maxUnlocked, leaderboard, onPlay, onExit }) {
       <div className="comp-levels-header">
         <button className="practice-exit" onClick={onExit}>← Back</button>
         <span className="practice-title" style={{ color: '#e74c3c' }}>Competitive Mode</span>
-        <span className="comp-player-name">Playing as: <strong>{playerName}</strong></span>
+        {playerName
+          ? <span className="comp-player-name">Playing as: <strong>{playerName}</strong></span>
+          : <span className="comp-player-name comp-player-name--anon">Enter your name to play</span>
+        }
       </div>
 
       <div className="comp-levels-body">
@@ -172,6 +143,42 @@ function LevelSelect({ playerName, maxUnlocked, leaderboard, onPlay, onExit }) {
           maxUnlocked={maxUnlocked}
           onPlay={onPlay}
         />
+      </div>
+    </div>
+  );
+}
+
+// ── Name entry modal (shown over level select when Play is clicked) ────────────
+
+function NameModal({ onSubmit, onCancel }) {
+  const [name, setName] = useState('');
+  return (
+    <div className="overlay">
+      <div className="modal" style={{ maxWidth: 360 }}>
+        <h3 style={{ color: '#e74c3c', margin: 0, fontSize: 20 }}>Enter your name</h3>
+        <p style={{ color: 'var(--text-dim)', fontSize: 14, margin: 0 }}>
+          Your progress and scores will be saved under this name.
+        </p>
+        <input
+          className="comp-name-input"
+          placeholder="Your name…"
+          maxLength={24}
+          value={name}
+          onChange={e => setName(e.target.value)}
+          onKeyDown={e => e.key === 'Enter' && name.trim() && onSubmit(name.trim())}
+          autoFocus
+        />
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button
+            className="btn btn--start"
+            style={{ background: '#922b21', flex: 1, marginTop: 0 }}
+            disabled={!name.trim()}
+            onClick={() => onSubmit(name.trim())}
+          >
+            Play →
+          </button>
+          <button className="btn btn--secondary" onClick={onCancel}>Cancel</button>
+        </div>
       </div>
     </div>
   );
@@ -209,18 +216,13 @@ function Playing({ level, playerName, maxUnlocked, leaderboard, onComplete, onEx
   const pct = answeredCount > 0 ? Math.round(correct / answeredCount * 100) : 100;
 
   const handleNext = () => {
-    const finalCorrect = correct + (feedback?.isCorrect ? 0 : 0); // already updated by handleAnswer
-    if (isLastHand) {
-      onComplete(correct);
-      return;
-    }
+    if (isLastHand) { onComplete(correct); return; }
     setHandNum(n => n + 1);
     dealNext();
   };
 
   return (
     <div className="comp-screen comp-screen--playing">
-      {/* Top bar */}
       <div className="comp-play-header">
         <button className="practice-exit" onClick={onExit}>✕ Quit</button>
         <div className="comp-progress">
@@ -236,10 +238,7 @@ function Playing({ level, playerName, maxUnlocked, leaderboard, onComplete, onEx
         </div>
       </div>
 
-      {/* Three-column body: level grid | play area | leaderboard */}
       <div className="comp-play-body">
-
-        {/* Left: level grid */}
         <div className="comp-play-sidebar comp-play-sidebar--left">
           <div className="comp-sidebar-title">Levels</div>
           <LevelGrid
@@ -252,7 +251,6 @@ function Playing({ level, playerName, maxUnlocked, leaderboard, onComplete, onEx
           />
         </div>
 
-        {/* Center: cards + actions */}
         <div className="comp-play-center">
           {loading ? (
             <div className="comp-loading">Dealing…</div>
@@ -265,13 +263,10 @@ function Playing({ level, playerName, maxUnlocked, leaderboard, onComplete, onEx
                 <span className="banner-position">{hand?.position}</span>
                 <span className="banner-scenario">{hand?.scenarioLabel}</span>
               </div>
-
               <div className="practice-context">{hand?.contextDesc}</div>
-
               <div className="comp-play-cards">
                 {hand?.holeCards.map((c, i) => <Card key={i} card={c} xlarge />)}
               </div>
-
               {!feedback ? (
                 <div className="comp-action-buttons">
                   {['raise', 'allin', 'call', 'fold'].map(a => (
@@ -294,11 +289,7 @@ function Playing({ level, playerName, maxUnlocked, leaderboard, onComplete, onEx
                       <div className="comp-feedback-chosen">You chose: {ACTION_LABELS[feedback.chosen]}</div>
                     </>
                   )}
-                  <button
-                    className="btn btn--start"
-                    style={{ background: '#922b21', marginTop: 8 }}
-                    onClick={handleNext}
-                  >
+                  <button className="btn btn--start" style={{ background: '#922b21', marginTop: 8 }} onClick={handleNext}>
                     {isLastHand ? 'See Results →' : 'Next Hand →'}
                   </button>
                 </div>
@@ -307,7 +298,6 @@ function Playing({ level, playerName, maxUnlocked, leaderboard, onComplete, onEx
           )}
         </div>
 
-        {/* Right: leaderboard */}
         <div className="comp-play-sidebar comp-play-sidebar--right">
           <div className="comp-sidebar-title">Leaderboard</div>
           <LeaderboardPanel
@@ -318,7 +308,6 @@ function Playing({ level, playerName, maxUnlocked, leaderboard, onComplete, onEx
             onPlay={null}
           />
         </div>
-
       </div>
     </div>
   );
@@ -358,9 +347,7 @@ function Results({ level, correct, playerName, onSaved, onRetry, onLevels }) {
           </div>
         )}
         {!perfect && (
-          <div className="comp-result-note">
-            You need 100% to unlock the next level.
-          </div>
+          <div className="comp-result-note">You need 100% to unlock the next level.</div>
         )}
         <div className="comp-result-actions">
           {!saved ? (
@@ -381,13 +368,21 @@ function Results({ level, correct, playerName, onSaved, onRetry, onLevels }) {
 // ── Root ──────────────────────────────────────────────────────────────────────
 
 export default function CompetitiveMode({ onExit }) {
-  const [screen, setScreen]           = useState('name');
-  const [playerName, setPlayerName]   = useState('');
-  const [maxUnlocked, setMaxUnlocked] = useState(1);
-  const [leaderboard, setLeaderboard] = useState({});
-  const [activeLevel, setActiveLevel] = useState(null);
+  const [screen, setScreen]             = useState('levels'); // start on leaderboard
+  const [playerName, setPlayerName]     = useState('');
+  const [maxUnlocked, setMaxUnlocked]   = useState(1);
+  const [leaderboard, setLeaderboard]   = useState({});
+  const [activeLevel, setActiveLevel]   = useState(null);
+  const [pendingLevel, setPendingLevel] = useState(null); // level clicked before name entered
   const [finalCorrect, setFinalCorrect] = useState(0);
 
+  // Load leaderboard on mount (no name needed)
+  const loadLeaderboard = useCallback(async () => {
+    const lb = await competitiveApi.leaderboard();
+    setLeaderboard(lb);
+  }, []);
+
+  // Refresh leaderboard + unlocks for a named player
   const refresh = useCallback(async (name) => {
     const [lb, ul] = await Promise.all([
       competitiveApi.leaderboard(),
@@ -397,15 +392,40 @@ export default function CompetitiveMode({ onExit }) {
     setMaxUnlocked(ul.maxUnlocked);
   }, []);
 
-  const handleName = async (name) => {
-    setPlayerName(name);
-    await refresh(name);
-    setScreen('levels');
+  useEffect(() => { loadLeaderboard(); }, [loadLeaderboard]);
+
+  // Called when user clicks Play on a level
+  const handlePlayRequest = (level) => {
+    if (playerName) {
+      // Already have a name — check lock and go
+      if (level.number > maxUnlocked) return;
+      setActiveLevel(level);
+      setScreen('playing');
+    } else {
+      // Need a name first
+      setPendingLevel(level);
+      setScreen('name-modal');
+    }
   };
 
-  const handlePlay = (level) => {
-    setActiveLevel(level);
-    setScreen('playing');
+  // Called when name is submitted from modal
+  const handleNameSubmit = async (name) => {
+    setPlayerName(name);
+    const [lb, ul] = await Promise.all([
+      competitiveApi.leaderboard(),
+      competitiveApi.unlocks(name),
+    ]);
+    setLeaderboard(lb);
+    setMaxUnlocked(ul.maxUnlocked);
+    // Check the pending level is now unlocked
+    if (pendingLevel && pendingLevel.number <= ul.maxUnlocked) {
+      setActiveLevel(pendingLevel);
+      setPendingLevel(null);
+      setScreen('playing');
+    } else {
+      setPendingLevel(null);
+      setScreen('levels');
+    }
   };
 
   const handleComplete = (correct) => {
@@ -417,16 +437,19 @@ export default function CompetitiveMode({ onExit }) {
 
   return (
     <>
-      {screen === 'name' && (
-        <NameEntry onSubmit={handleName} onExit={onExit} />
-      )}
-      {screen === 'levels' && (
+      {(screen === 'levels' || screen === 'name-modal') && (
         <LevelSelect
           playerName={playerName}
           maxUnlocked={maxUnlocked}
           leaderboard={leaderboard}
-          onPlay={handlePlay}
+          onPlay={handlePlayRequest}
           onExit={onExit}
+        />
+      )}
+      {screen === 'name-modal' && (
+        <NameModal
+          onSubmit={handleNameSubmit}
+          onCancel={() => { setPendingLevel(null); setScreen('levels'); }}
         />
       )}
       {screen === 'playing' && (
@@ -445,7 +468,7 @@ export default function CompetitiveMode({ onExit }) {
           correct={finalCorrect}
           playerName={playerName}
           onSaved={handleSaved}
-          onRetry={() => handlePlay(activeLevel)}
+          onRetry={() => handlePlayRequest(activeLevel)}
           onLevels={async () => { await refresh(playerName); setScreen('levels'); }}
         />
       )}
