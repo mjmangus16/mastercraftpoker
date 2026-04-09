@@ -225,6 +225,7 @@ function Playing({ level, playerName, maxUnlocked, leaderboard, onComplete, onEx
     <div className="comp-screen comp-screen--playing">
       <div className="comp-play-header">
         <button className="practice-exit" onClick={onExit}>✕ Quit</button>
+        <span className="comp-level-badge">Lv {level.number}</span>
         <div className="comp-progress">
           <span className="comp-hand-count">Hand <strong>{handNum}</strong> / {level.hands}</span>
           <div className="comp-progress-bar">

@@ -155,6 +155,7 @@ function GameTable({
   loading,
   revealBots,
   onToggleReveal,
+  onQuit,
 }) {
   const {
     players,
@@ -268,7 +269,10 @@ function GameTable({
   return (
     <div className="game-layout">
       <header className="game-header">
-        <span className="header-brand">♠ Mastercraft Poker</span>
+        <div className="header-left">
+          <button className="btn--back-menu" onClick={onQuit} title="Back to menu">← Menu</button>
+          <span className="header-brand">♠ Mastercraft Poker</span>
+        </div>
         <div className="header-center">
           <span className="header-hand">Hand #{handNumber}</span>
           <span className="header-phase">{PHASE_LABEL[phase] || phase}</span>
@@ -490,6 +494,7 @@ export default function App() {
         loading={loading}
         revealBots={revealBots}
         onToggleReveal={() => setRevealBots((r) => !r)}
+        onQuit={() => setState(null)}
       />
       {error && <div className="error-toast">{error}</div>}
     </>

@@ -101,12 +101,27 @@
   border-bottom: 1px solid var(--surface2);
   flex-shrink: 0;
 }
+.header-left   { display: flex; align-items: center; gap: 10px; }
 .header-brand  { font-weight: 700; font-size: 16px; color: var(--gold); }
 .header-center { display: flex; gap: 14px; align-items: center; }
 .header-hand   { font-size: 13px; color: var(--text-dim); }
 .header-phase  { font-size: 14px; font-weight: 600; color: var(--text); background: var(--surface2); padding: 2px 10px; border-radius: 20px; }
 .header-blinds { font-size: 12px; color: var(--text-dim); }
 .header-right  { display: flex; gap: 8px; align-items: center; justify-content: flex-end; min-width: 120px; }
+
+.btn--back-menu {
+  background: none;
+  border: 1px solid rgba(255,255,255,0.15);
+  color: var(--text-dim);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 20px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: color .15s, border-color .15s;
+}
+.btn--back-menu:hover { color: var(--text); border-color: rgba(255,255,255,0.35); }
 
 .btn--peek {
   padding: 3px 10px;
@@ -1004,6 +1019,13 @@
 .lb-score--good    { color: #f39c12; }
 .lb-score--ok      { color: var(--text-dim); }
 
+/* ── Locked level message ──────────────────────────────────────────────────── */
+.comp-lb-locked-msg {
+  font-size: 12px;
+  color: var(--text-dim);
+  font-style: italic;
+}
+
 /* ── Playing screen ────────────────────────────────────────────────────────── */
 .comp-play-header {
   display: flex;
@@ -1043,6 +1065,10 @@
 .comp-score-num   { font-size: 24px; font-weight: 800; color: #2ecc71; }
 .comp-score-denom { font-size: 14px; color: var(--text-dim); }
 .comp-score-pct   { font-size: 13px; color: var(--text-dim); margin-left: 4px; }
+
+.comp-level-badge {
+  display: none; /* shown only on mobile where sidebars are hidden */
+}
 
 /* Three-column playing layout */
 .comp-play-body {
@@ -1241,21 +1267,25 @@
   html { font-size: 14px; }
 
   /* ── Setup screen ── */
-  .setup-card { padding: 28px 20px; }
-  .setup-title { font-size: 22px; }
+  .setup-card { padding: 22px 16px; }
+  .setup-logo { font-size: 28px; margin-bottom: 8px; letter-spacing: 5px; }
+  .setup-title { font-size: 20px; }
+  .setup-sub { margin-bottom: 20px; }
+  .setup-field { margin-bottom: 16px; }
   .btn--start { font-size: 15px; padding: 12px 20px; }
   .btn--practice-mode,
   .btn--competitive-mode { font-size: 13px; padding: 9px 16px; }
 
   /* ── Game header ── */
   .game-header { padding: 8px 12px; gap: 6px; }
-  .header-brand { font-size: 13px; }
+  .header-brand { display: none; }
   .header-center { gap: 6px; }
   .header-hand { display: none; }
   .header-phase { font-size: 12px; padding: 2px 7px; }
   .header-blinds { display: none; }
   .header-right { min-width: unset; gap: 5px; }
   .your-turn-badge { font-size: 11px; padding: 2px 7px; }
+  .btn--back-menu { font-size: 11px; padding: 3px 8px; }
 
   /* ── Table felt — shrink radius so it fits portrait ── */
   .table-wrap { padding: 8px; }
@@ -1317,6 +1347,7 @@
   /* ── Practice screen ── */
   .practice-screen--active { height: auto; min-height: 100vh; overflow: auto; }
   .practice-header { padding: 8px 12px; gap: 8px; flex-wrap: wrap; }
+  .practice-header-cat { display: none; }
   .practice-title { font-size: 14px; }
   .practice-stats { font-size: 12px; }
 
@@ -1335,6 +1366,8 @@
     padding: 16px 12px;
     gap: 14px;
     justify-content: flex-start;
+    width: 100%;
+    box-sizing: border-box;
   }
   .comp-play-banner, .practice-position-banner { max-width: 100%; }
 
@@ -1359,29 +1392,33 @@
 
   .comp-lb-panel { border-left: none; border-top: 1px solid #ffffff10; padding: 14px; }
 
-  /* ── Competitive playing — stack vertically ── */
-  .comp-play-body { flex-direction: column; overflow: auto; height: auto; }
-  .comp-play-sidebar {
-    width: 100%;
-    border-right: none;
-    border-bottom: 1px solid #ffffff10;
-  }
-  .comp-play-sidebar--right {
-    border-left: none;
-    border-top: 1px solid #ffffff10;
-  }
-  .comp-play-sidebar .comp-grid {
-    grid-template-columns: repeat(8, 1fr);
-    width: 100%;
-    padding: 8px;
-  }
+  /* ── Competitive playing — full-screen center on mobile ── */
+  .comp-play-body { overflow: auto; height: auto; }
+  .comp-play-sidebar { display: none; }
   .comp-play-center {
     padding: 16px 12px;
     gap: 14px;
     justify-content: flex-start;
+    width: 100%;
+    box-sizing: border-box;
   }
-  .comp-action-buttons { gap: 8px; flex-wrap: wrap; }
-  .comp-action-btn { font-size: 15px !important; padding: 12px 20px !important; min-width: 90px; }
+  .comp-action-buttons { gap: 8px; width: 100%; }
+  .comp-action-btn {
+    font-size: 15px !important;
+    padding: 13px 10px !important;
+    min-width: unset;
+    flex: 1;
+  }
+  .comp-level-badge {
+    display: inline-flex;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text-dim);
+    background: var(--surface);
+    border-radius: 20px;
+    padding: 3px 10px;
+    flex-shrink: 0;
+  }
 
   /* ── Practice card (start screen) ── */
   .practice-card { padding: 24px 16px; }
@@ -1392,8 +1429,10 @@
   .comp-name-input { font-size: 16px; }
 
   /* ── Competitive playing header ── */
-  .comp-play-header { padding: 8px 12px; gap: 8px; }
-  .comp-score-num { font-size: 20px; }
+  .comp-play-header { padding: 8px 12px; gap: 8px; flex-wrap: wrap; }
+  .comp-score-num { font-size: 18px; }
+  .comp-score-pct { display: none; }
+  .comp-hand-count { font-size: 11px; }
 
   /* ── Results screen ── */
   .comp-result-num { font-size: 42px; }
