@@ -6,11 +6,12 @@ import ActionBar from "./components/ActionBar";
 import HandResult from "./components/HandResult";
 import PreflopPractice from "./components/PreflopPractice";
 import CompetitiveMode from "./components/CompetitiveMode";
+import HandLookup from "./components/HandLookup";
 import "./App.css";
 
 // ── Setup screen ───────────────────────────────────────────────────────────────
 
-function SetupScreen({ onStart, onPractice, onCompetitive, loading }) {
+function SetupScreen({ onStart, onPractice, onCompetitive, onLookup, loading }) {
   const [opponents, setOpponents] = useState(2);
 
   return (
@@ -62,6 +63,13 @@ function SetupScreen({ onStart, onPractice, onCompetitive, loading }) {
           disabled={loading}
         >
           Preflop Practice
+        </button>
+        <button
+          className="btn btn--lookup-mode"
+          onClick={onLookup}
+          disabled={loading}
+        >
+          Hand Lookup
         </button>
         <button
           className="btn btn--competitive-mode"
@@ -437,6 +445,7 @@ export default function App() {
   const [revealBots, setRevealBots] = useState(false);
   const [practiceMode, setPracticeMode] = useState(false);
   const [competitiveMode, setCompetitiveMode] = useState(false);
+  const [lookupMode, setLookupMode] = useState(false);
 
   async function call(fn) {
     setLoading(true);
@@ -472,6 +481,10 @@ export default function App() {
     return <PreflopPractice onExit={() => setPracticeMode(false)} />;
   }
 
+  if (lookupMode) {
+    return <HandLookup onExit={() => setLookupMode(false)} />;
+  }
+
   if (competitiveMode) {
     return <CompetitiveMode onExit={() => setCompetitiveMode(false)} />;
   }
@@ -479,7 +492,7 @@ export default function App() {
   if (!state) {
     return (
       <>
-        <SetupScreen onStart={handleStart} onPractice={() => setPracticeMode(true)} onCompetitive={() => setCompetitiveMode(true)} loading={loading} />
+        <SetupScreen onStart={handleStart} onPractice={() => setPracticeMode(true)} onLookup={() => setLookupMode(true)} onCompetitive={() => setCompetitiveMode(true)} loading={loading} />
         {error && <div className="error-toast">{error}</div>}
       </>
     );

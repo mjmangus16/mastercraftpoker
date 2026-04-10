@@ -728,6 +728,22 @@
   align-items: center;
   gap: 10px;
 }
+.range-grid-wrap {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+.range-so-label {
+  font-size: 10px;
+  font-weight: 600;
+  color: rgba(255,255,255,0.35);
+  letter-spacing: .3px;
+  pointer-events: none;
+  user-select: none;
+}
+.range-so-suited  { text-align: right; margin-bottom: 2px; }
+.range-so-offsuit { text-align: left;  margin-top: 2px; }
 .range-grid {
   display: grid;
   grid-template-columns: repeat(13, 1fr);
@@ -748,6 +764,8 @@
   user-select: none;
   aspect-ratio: 1;
 }
+.range-cell--clickable { cursor: pointer; }
+.range-cell--clickable:hover { opacity: .75; outline: 1px solid rgba(255,255,255,0.3); }
 .range-cell--raise    { background: #1a6b3a; color: #fff; }
 .range-cell--call     { background: #1a4a7a; color: #fff; }
 .range-cell--mixed-rf { background: #7a4a10; color: #fff; }
@@ -864,6 +882,164 @@
   transition: background .15s;
 }
 .btn--competitive-mode:hover { background: rgba(231,76,60,.12); }
+
+/* ── Hand Lookup button ────────────────────────────────────────────────────── */
+.btn--lookup-mode {
+  background: transparent;
+  border: 1px solid #5b9bd5;
+  color: #5b9bd5;
+  padding: 10px 22px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  width: 100%;
+  margin-top: 4px;
+  cursor: pointer;
+  transition: background .15s;
+}
+.btn--lookup-mode:hover { background: rgba(91,155,213,.12); }
+
+/* ── Hand Lookup layout ────────────────────────────────────────────────────── */
+.lookup-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 20px;
+  border-right: 1px solid #ffffff10;
+  width: 240px;
+  flex-shrink: 0;
+  overflow-y: auto;
+}
+.lookup-section { display: flex; flex-direction: column; gap: 8px; }
+.lookup-section-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: .5px;
+}
+.lookup-pos-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 5px;
+}
+.lookup-pos-btn {
+  background: var(--surface);
+  border: 1px solid #3a4a5a;
+  color: var(--text-dim);
+  border-radius: 6px;
+  padding: 6px 4px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all .15s;
+  text-align: center;
+}
+.lookup-pos-btn:hover { border-color: #5b9bd5; color: var(--text); }
+.lookup-pos-btn--active { border-color: #5b9bd5; background: #0e1f35; color: #5b9bd5; }
+
+.lookup-mp-note {
+  font-size: 11px;
+  color: var(--text-dim);
+  font-style: italic;
+}
+.lookup-cat-pills { display: flex; flex-wrap: wrap; gap: 5px; }
+
+.lookup-scenario-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.lookup-scenario-btn {
+  background: var(--surface);
+  border: 1px solid #3a4a5a;
+  color: var(--text-dim);
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 12px;
+  font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+  transition: all .15s;
+}
+.lookup-scenario-btn:hover { border-color: #5b9bd5; color: var(--text); }
+.lookup-scenario-btn--active { border-color: #5b9bd5; background: #0e1f35; color: #5b9bd5; }
+
+.lookup-context {
+  font-size: 12px;
+  color: var(--text-dim);
+  font-style: italic;
+  line-height: 1.5;
+  padding: 8px 10px;
+  background: var(--surface);
+  border-radius: 6px;
+  border-left: 3px solid #5b9bd5;
+}
+
+/* ── Lookup result ─────────────────────────────────────────────────────────── */
+.lookup-prompt {
+  font-size: 14px;
+  color: var(--text-dim);
+  font-style: italic;
+}
+.lookup-result {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 20px;
+  background: var(--surface2);
+  border-radius: 12px;
+  border: 1px solid #3a4a5a;
+}
+.lookup-result-hand {
+  font-size: 22px;
+  font-weight: 900;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+.lookup-so-badge {
+  font-size: 11px;
+  font-weight: 700;
+  border-radius: 4px;
+  padding: 2px 6px;
+  text-transform: lowercase;
+}
+.lookup-so-badge--suited  { background: #1a3a5c; color: #7ab3e0; }
+.lookup-so-badge--offsuit { background: #2c2c3a; color: var(--text-dim); }
+
+.lookup-result-action {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+}
+.lookup-action-pill {
+  font-size: 18px;
+  font-weight: 800;
+  color: #fff;
+  border-radius: 8px;
+  padding: 6px 20px;
+  letter-spacing: .3px;
+}
+.lookup-action-word { font-size: 18px; font-weight: 800; }
+.lookup-action-word--raise { color: #2ecc71; }
+.lookup-action-word--allin { color: #a569bd; }
+.lookup-action-word--call  { color: #5b9bd5; }
+.lookup-action-word--fold  { color: #e74c3c; }
+.lookup-action-sep { color: var(--text-dim); font-size: 14px; }
+.lookup-mixed-tag {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-dim);
+  background: var(--surface);
+  border-radius: 4px;
+  padding: 2px 6px;
+  text-transform: uppercase;
+  letter-spacing: .4px;
+}
 
 /* ── Competitive screens ───────────────────────────────────────────────────── */
 .comp-screen {
@@ -1374,6 +1550,7 @@
   /* Range chart — full width on mobile */
   .range-grid { width: min(calc(100vw - 24px), 420px); }
   .range-cell { font-size: 6px; border-radius: 2px; }
+  .range-so-label { font-size: 9px; }
 
   /* ── Competitive level select ── */
   .comp-screen--levels,
@@ -1419,6 +1596,20 @@
     padding: 3px 10px;
     flex-shrink: 0;
   }
+
+  /* ── Hand Lookup ── */
+  .lookup-sidebar {
+    width: 100%;
+    border-right: none;
+    border-bottom: 1px solid #ffffff10;
+    padding: 14px 12px;
+    gap: 14px;
+  }
+  .lookup-pos-grid { grid-template-columns: repeat(5, 1fr); }
+  .lookup-result { flex-direction: column; align-items: flex-start; gap: 8px; padding: 12px 14px; }
+  .lookup-result-hand { font-size: 18px; }
+  .lookup-action-pill { font-size: 15px; padding: 5px 14px; }
+  .lookup-action-word { font-size: 15px; }
 
   /* ── Practice card (start screen) ── */
   .practice-card { padding: 24px 16px; }

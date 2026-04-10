@@ -501,6 +501,20 @@ app.post('/api/competitive/score', (req, res) => {
   res.json({ ok: true });
 });
 
+// ── Hand Lookup ───────────────────────────────────────────────────────────────
+
+app.get('/api/lookup/scenarios', (_req, res) => {
+  res.json(PRACTICE_SCENARIOS.map(({ key, position, category, scenarioLabel, contextDesc }) => ({
+    key, position, category, scenarioLabel, contextDesc,
+  })));
+});
+
+app.get('/api/lookup/chart/:key', (req, res) => {
+  const chart = charts[req.params.key];
+  if (!chart) return res.status(404).json({ error: 'Chart not found' });
+  res.json({ chart });
+});
+
 // Serve built React app in production
 if (process.env.NODE_ENV === "production") {
   app.use(express.static(path.join(__dirname, "../client/dist")));

@@ -32,3 +32,9 @@ export const competitiveApi = {
   unlocks:      (name)                       => competitive(`/unlocks/${encodeURIComponent(name)}`),
   saveScore:    (name, level, correct, total) => competitive('/score', { name, level, correct, total }),
 };
+
+const lookup = (path) => request('/api/lookup', path);
+export const lookupApi = {
+  scenarios: () => lookup('/scenarios'),
+  chart: (key) => lookup(`/chart/${encodeURIComponent(key)}`),
+};

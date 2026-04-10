@@ -19,30 +19,36 @@ function cellColor(action) {
   return null; // fold
 }
 
-export default function HandRangeChart({ chart, highlightHand }) {
+export default function HandRangeChart({ chart, highlightHand, onSelectHand }) {
   return (
     <div className="range-chart">
-      <div className="range-grid">
-        {RANKS.map((_, i) =>
-          RANKS.map((_, j) => {
-            const key   = cellKey(i, j);
-            const color = cellColor(chart[key]);
-            const hi    = key === highlightHand;
-            return (
-              <div
-                key={key}
-                className={[
-                  'range-cell',
-                  color ? `range-cell--${color}` : '',
-                  hi ? 'range-cell--highlight' : '',
-                ].filter(Boolean).join(' ')}
-                title={key}
-              >
-                {key.replace(/[so]$/, '')}
-              </div>
-            );
-          })
-        )}
+      <div className="range-grid-wrap">
+        <span className="range-so-label range-so-suited">suited ↗</span>
+        <div className="range-grid">
+          {RANKS.map((_, i) =>
+            RANKS.map((_, j) => {
+              const key   = cellKey(i, j);
+              const color = cellColor(chart[key]);
+              const hi    = key === highlightHand;
+              return (
+                <div
+                  key={key}
+                  className={[
+                    'range-cell',
+                    color ? `range-cell--${color}` : '',
+                    hi ? 'range-cell--highlight' : '',
+                    onSelectHand ? 'range-cell--clickable' : '',
+                  ].filter(Boolean).join(' ')}
+                  title={key}
+                  onClick={() => onSelectHand?.(key)}
+                >
+                  {key.replace(/[so]$/, '')}
+                </div>
+              );
+            })
+          )}
+        </div>
+        <span className="range-so-label range-so-offsuit">↙ offsuit</span>
       </div>
       <div className="range-legend">
         <span className="legend-item legend-item--raise">Raise</span>
