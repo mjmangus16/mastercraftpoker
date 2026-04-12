@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { practiceApi } from '../api';
 import Card from './Card';
 import HandRangeChart from './HandRangeChart';
@@ -48,11 +48,12 @@ export default function PreflopPractice({ onExit }) {
     }));
   }, [hand, feedback]);
 
-  const handleCategoryChange = (cat) => {
-    setCategory(cat);
-    setHand(null);
-    setFeedback(null);
-  };
+  // Auto-advance after any answer — quicker on correct, longer on wrong so it registers
+  useEffect(() => {
+    if (!feedback) return;
+    const t = setTimeout(() => deal(), feedback.correct ? 800 : 2800);
+    return () => clearTimeout(t);
+  }, [feedback, deal]);
 
   // Start / category selection screen
   if (!hand && !loading) {
@@ -94,7 +95,7 @@ export default function PreflopPractice({ onExit }) {
   }
 
   return (
-    <div className="practice-screen practice-screen--active">
+    <div className="practice-screen practice-screen--active practice-screen--practice">
       <div className="practice-header">
         <button className="practice-exit" onClick={onExit}>← Back</button>
         <span className="practice-title">Preflop Practice</span>
@@ -135,39 +136,37 @@ export default function PreflopPractice({ onExit }) {
             {hand?.holeCards.map((c, i) => <Card key={i} card={c} xlarge />)}
           </div>
 
-          {!feedback ? (
-            <>
-              <p className="practice-prompt">What is the GTO play?</p>
-              <div className="comp-action-buttons">
-                {['raise', 'allin', 'call', 'fold'].map(a => (
-                  <button
-                    key={a}
-                    className={`btn btn--${a === 'allin' ? 'allin' : a} comp-action-btn`}
-                    onClick={() => evaluate(a)}
-                    disabled={loading}
-                  >
-                    {ACTION_LABELS[a]}
-                  </button>
-                ))}
-              </div>
-            </>
-          ) : (
-            <div className={`comp-play-feedback comp-feedback--${feedback.correct ? 'correct' : 'wrong'}`}>
-              {feedback.correct ? (
-                <div className="comp-feedback-correct">✓ Correct!</div>
-              ) : (
-                <>
-                  <div className="comp-feedback-wrong">✗ Incorrect</div>
-                  <div className="comp-feedback-answer-label">Correct answer</div>
-                  <div className="comp-feedback-answer">
-                    {feedback.gtoActions.map(a => ACTION_LABELS[a] || a).join(' or ')}
-                  </div>
-                  <div className="comp-feedback-chosen">You chose: {ACTION_LABELS[feedback.chosen]}</div>
-                </>
-              )}
-              <button className="btn btn--start" onClick={() => deal()} disabled={loading} style={{ marginTop: 8 }}>
-                {loading ? 'Dealing…' : 'Next Hand →'}
+          <p className="practice-prompt">What is the GTO play?</p>
+          <div className="comp-action-buttons">
+            {['raise', 'allin', 'call', 'fold'].map(a => (
+              <button
+                key={a}
+                className={`btn btn--${a === 'allin' ? 'allin' : a} comp-action-btn${
+                  feedback?.chosen === a ? (feedback.correct ? ' practice-btn--correct' : ' practice-btn--wrong') : ''
+                }${feedback && feedback.chosen !== a && feedback.gtoActions.includes(a) ? ' practice-btn--gto' : ''}`}
+                onClick={() => evaluate(a)}
+                disabled={!!feedback || loading}
+              >
+                {ACTION_LABELS[a]}
               </button>
+            ))}
+          </div>
+          {feedback && (
+            <div className={`practice-feedback-bar practice-feedback-bar--${feedback.correct ? 'correct' : 'wrong'}`}>
+              {feedback.correct ? (
+                <span>✓ Correct</span>
+              ) : (
+                <div className="practice-feedback-wrong-body">
+                  <div className="practice-feedback-wrong-row">
+                    <span className="practice-feedback-wrong-label">You chose</span>
+                    <span className="practice-feedback-wrong-action practice-feedback-wrong-action--bad">{ACTION_LABELS[feedback.chosen]}</span>
+                  </div>
+                  <div className="practice-feedback-wrong-row">
+                    <span className="practice-feedback-wrong-label">GTO play</span>
+                    <span className="practice-feedback-wrong-action practice-feedback-wrong-action--good">{feedback.gtoActions.map(a => ACTION_LABELS[a]).join(' or ')}</span>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>

@@ -1,23 +1,22 @@
 import Card from './Card';
 
-export default function PlayerSeat({ player, isCurrent, showdownWinner, inShowdown, handName, winAmount, revealBots }) {
+export default function PlayerSeat({ player, isCurrent, showdownWinner, inShowdown, handName, winAmount, revealBots, compact }) {
   const { name, chips, currentBet, folded, allIn, isHuman, isDealer, isSB, isBB, position, styleLabel, holeCards, eliminated } = player;
 
   let statusTag = null;
   if (showdownWinner)   statusTag = <span className="tag tag--winner">WINNER</span>;
   else if (eliminated)  statusTag = <span className="tag tag--out">OUT</span>;
-  else if (folded)      statusTag = <span className="tag tag--fold">FOLD</span>;
   else if (allIn)       statusTag = <span className="tag tag--allin">ALL-IN</span>;
-  else if (isCurrent && !inShowdown) statusTag = <span className="tag tag--acting">ACTING</span>;
 
   const badges = [];
   if (isDealer) badges.push(<span key="d" className="badge badge--dealer">D</span>);
 
   let seatClass = 'seat';
   if (isHuman)                    seatClass += ' seat--human';
+  if (compact)                    seatClass += ' seat--compact';
   if (isCurrent && !inShowdown)   seatClass += ' seat--current';
   if (showdownWinner)             seatClass += ' seat--winner';
-  if (folded || eliminated) seatClass += ' seat--inactive';
+  if (folded || eliminated)       seatClass += ' seat--inactive';
 
   return (
     <div className={seatClass}>
@@ -35,7 +34,7 @@ export default function PlayerSeat({ player, isCurrent, showdownWinner, inShowdo
         <div className="seat-position" data-pos={position}>{position}</div>
       )}
 
-      {styleLabel && !isHuman && (
+      {styleLabel && !isHuman && !compact && (
         <div className="seat-style">{styleLabel}</div>
       )}
 
@@ -61,7 +60,6 @@ export default function PlayerSeat({ player, isCurrent, showdownWinner, inShowdo
       <div className="seat-chips">
         <span className="chip-count">${chips.toLocaleString()}</span>
         {winAmount != null && <span className="seat-win-amount">+${winAmount.toLocaleString()}</span>}
-        {!winAmount && currentBet > 0 && <span className="current-bet">bet ${currentBet}</span>}
       </div>
     </div>
   );

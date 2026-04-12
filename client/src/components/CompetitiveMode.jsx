@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { practiceApi, competitiveApi } from '../api';
 import Card from './Card';
 
@@ -368,10 +368,9 @@ function Results({ level, correct, playerName, onSaved, onRetry, onLevels }) {
 
 // ── Root ──────────────────────────────────────────────────────────────────────
 
-export default function CompetitiveMode({ onExit }) {
-  const [screen, setScreen]             = useState('levels'); // start on leaderboard
-  const [playerName, setPlayerName]     = useState('');
-  const [maxUnlocked, setMaxUnlocked]   = useState(1);
+export default function CompetitiveMode({ onExit, playerName, onPlayerNameChange }) {
+  const [screen, setScreen]           = useState('levels');
+  const [maxUnlocked, setMaxUnlocked] = useState(1);
   const [leaderboard, setLeaderboard]   = useState({});
   const [activeLevel, setActiveLevel]   = useState(null);
   const [pendingLevel, setPendingLevel] = useState(null); // level clicked before name entered
@@ -411,7 +410,7 @@ export default function CompetitiveMode({ onExit }) {
 
   // Called when name is submitted from modal
   const handleNameSubmit = async (name) => {
-    setPlayerName(name);
+    onPlayerNameChange(name);
     const [lb, ul] = await Promise.all([
       competitiveApi.leaderboard(),
       competitiveApi.unlocks(name),

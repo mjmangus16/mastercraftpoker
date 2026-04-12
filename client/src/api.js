@@ -38,3 +38,9 @@ export const lookupApi = {
   scenarios: () => lookup('/scenarios'),
   chart: (key) => lookup(`/chart/${encodeURIComponent(key)}`),
 };
+
+const rangesBase = (path, body) => request('/api/ranges', path, body);
+export const rangesApi = {
+  load: (name) => rangesBase(`/${encodeURIComponent(name.toLowerCase())}`),
+  save: (name, updates) => rangesBase(`/${encodeURIComponent(name.toLowerCase())}`, updates),
+};

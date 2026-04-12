@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { lookupApi } from '../api';
 import HandRangeChart from './HandRangeChart';
 
@@ -32,6 +32,10 @@ export default function HandLookup({ onExit }) {
   const [chart, setChart]               = useState(null);
   const [selectedHand, setSelectedHand] = useState(null);
   const [loadingChart, setLoadingChart] = useState(false);
+  // Keep last chart in a ref so the container doesn't collapse while the next one loads
+  const prevChartRef = useRef(null);
+  if (chart) prevChartRef.current = chart;
+  const displayChart = chart ?? prevChartRef.current;
 
   const chartPos = toChartPos(dispPos);
   const showMPNote = MP_POSITIONS.has(dispPos);
@@ -102,9 +106,56 @@ export default function HandLookup({ onExit }) {
         )}
       </div>
 
-      <div className="practice-body">
+      <div className="practice-body practice-body--lookup">
 
-        {/* ── Left sidebar: selectors ── */}
+        {/* ── Chart + result ── */}
+        <div className="practice-center">
+          {displayChart ? (
+            <div className={`lookup-chart-wrap${loadingChart ? ' lookup-chart-wrap--loading' : ''}`}>
+              <HandRangeChart
+                chart={displayChart}
+                highlightHand={selectedHand}
+                onSelectHand={setSelectedHand}
+              />
+            </div>
+          ) : (
+            <div className="lookup-prompt">Select a position and scenario to load the chart</div>
+          )}
+
+          {displayChart && (gtoActions ? (
+            <div className={`lookup-result lookup-result--${isMixed ? 'mixed' : gtoActions[0]}`}>
+              <span className="lookup-result-hand">
+                {selectedHand}
+                {selectedHand?.endsWith('s') && <span className="lookup-so-badge lookup-so-badge--suited">suited</span>}
+                {selectedHand?.endsWith('o') && <span className="lookup-so-badge lookup-so-badge--offsuit">offsuit</span>}
+              </span>
+              <span className="lookup-result-action">
+                {isMixed ? (
+                  <>
+                    {gtoActions.map((a, i) => (
+                      <span key={a} className={`lookup-action-word lookup-action-word--${a}`}>
+                        {i > 0 && <span className="lookup-action-sep"> / </span>}
+                        {ACTION_STYLE[a]?.label ?? a}
+                      </span>
+                    ))}
+                    <span className="lookup-mixed-tag">Mixed</span>
+                  </>
+                ) : (
+                  <span
+                    className="lookup-action-pill"
+                    style={{ background: ACTION_STYLE[gtoActions[0]]?.bg ?? '#2c3e50' }}
+                  >
+                    {ACTION_STYLE[gtoActions[0]]?.label ?? gtoActions[0]}
+                  </span>
+                )}
+              </span>
+            </div>
+          ) : (
+            <div className="lookup-prompt">↑ Click any hand on the chart</div>
+          ))}
+        </div>
+
+        {/* ── Selectors below chart ── */}
         <div className="lookup-sidebar">
 
           <div className="lookup-section">
@@ -159,55 +210,6 @@ export default function HandLookup({ onExit }) {
 
           {currentScenario?.contextDesc && (
             <div className="lookup-context">{currentScenario.contextDesc}</div>
-          )}
-        </div>
-
-        {/* ── Right: chart + result ── */}
-        <div className="practice-center">
-          {loadingChart ? (
-            <div className="comp-loading">Loading chart…</div>
-          ) : chart ? (
-            <>
-              <HandRangeChart
-                chart={chart}
-                highlightHand={selectedHand}
-                onSelectHand={setSelectedHand}
-              />
-
-              {gtoActions ? (
-                <div className={`lookup-result lookup-result--${isMixed ? 'mixed' : gtoActions[0]}`}>
-                  <span className="lookup-result-hand">
-                    {selectedHand}
-                    {selectedHand?.endsWith('s') && <span className="lookup-so-badge lookup-so-badge--suited">suited</span>}
-                    {selectedHand?.endsWith('o') && <span className="lookup-so-badge lookup-so-badge--offsuit">offsuit</span>}
-                  </span>
-                  <span className="lookup-result-action">
-                    {isMixed ? (
-                      <>
-                        {gtoActions.map((a, i) => (
-                          <span key={a} className={`lookup-action-word lookup-action-word--${a}`}>
-                            {i > 0 && <span className="lookup-action-sep"> / </span>}
-                            {ACTION_STYLE[a]?.label ?? a}
-                          </span>
-                        ))}
-                        <span className="lookup-mixed-tag">Mixed</span>
-                      </>
-                    ) : (
-                      <span
-                        className="lookup-action-pill"
-                        style={{ background: ACTION_STYLE[gtoActions[0]]?.bg ?? '#2c3e50' }}
-                      >
-                        {ACTION_STYLE[gtoActions[0]]?.label ?? gtoActions[0]}
-                      </span>
-                    )}
-                  </span>
-                </div>
-              ) : (
-                <div className="lookup-prompt">↑ Click any hand on the chart</div>
-              )}
-            </>
-          ) : (
-            <div className="lookup-prompt">Select a position and scenario to load the chart</div>
           )}
         </div>
 

@@ -7,7 +7,100 @@ const { TexasHoldem } = require("./game/game");
 const { botDecide, getGtoHint, getPosition, handKey } = require("./game/bot");
 const { Deck } = require("./game/deck");
 const { charts } = require("./gto");
-const { bestHand, handName } = require("./game/evaluator");
+const { bestHand, compareScores, handName } = require("./game/evaluator");
+
+// ── Equity & outs calculator ──────────────────────────────────────────────────
+
+const SUITS = ['♠', '♥', '♦', '♣'];
+const RANKS = ['2','3','4','5','6','7','8','9','T','J','Q','K','A'];
+const RANK_VALUES = Object.fromEntries(RANKS.map((r, i) => [r, i + 2]));
+
+function buildFullDeck() {
+  const deck = [];
+  for (const suit of SUITS)
+    for (const rank of RANKS)
+      deck.push({ rank, suit, value: RANK_VALUES[rank] });
+  return deck;
+}
+
+function cardId(c) { return c.rank + c.suit; }
+
+// Score the best 5-card hand from hole + board
+function scoreHand(hole, board) {
+  const h = bestHand([...hole, ...board]);
+  return h ? h.score : [0];
+}
+
+// Returns { equity, outs } for the human player.
+// Opponents' cards are treated as unknown — equity is calculated against
+// random hands from the remaining deck, matching real poker conditions.
+function calcEquityAndOuts(game, humanIndex) {
+  const human = game.players[humanIndex];
+  const board = game.community;
+  const phase = game.phase;
+
+  if (!human.holeCards.length || phase === 'showdown') return null;
+
+  // Only remove YOUR cards and community from the deck — opponents' cards unknown
+  const usedIds = new Set();
+  for (const c of board) usedIds.add(cardId(c));
+  for (const c of human.holeCards) usedIds.add(cardId(c));
+
+  const remaining = buildFullDeck().filter(c => !usedIds.has(cardId(c)));
+
+  const numOpponents = game.players.filter(
+    (p, i) => i !== humanIndex && !p.folded && p.holeCards.length
+  ).length;
+
+  if (!numOpponents) return { equity: 100, outs: null };
+
+  // Monte Carlo for all streets — deal random hands to opponents each sample
+  const SAMPLES = phase === 'river' ? 600 : 900;
+  let wins = 0, total = 0;
+
+  for (let s = 0; s < SAMPLES; s++) {
+    const deck = [...remaining].sort(() => Math.random() - 0.5);
+    let idx = 0;
+
+    // Deal 2 unknown cards to each opponent
+    const oppHands = [];
+    let valid = true;
+    for (let o = 0; o < numOpponents; o++) {
+      if (idx + 2 > deck.length) { valid = false; break; }
+      oppHands.push([deck[idx++], deck[idx++]]);
+    }
+    if (!valid) continue;
+
+    // Complete the board with random runout cards
+    const runoutNeeded = 5 - board.length;
+    if (idx + runoutNeeded > deck.length) continue;
+    const runBoard = [...board, ...deck.slice(idx, idx + runoutNeeded)];
+
+    const myScore = scoreHand(human.holeCards, runBoard);
+    let iWin = true;
+    let isTie = false;
+    for (const oppHole of oppHands) {
+      const cmp = compareScores(scoreHand(oppHole, runBoard), myScore);
+      if (cmp > 0) { iWin = false; isTie = false; break; }
+      if (cmp === 0) isTie = true;
+    }
+
+    if (iWin && !isTie) wins += 1;
+    else if (isTie)     wins += 0.5;
+    total++;
+  }
+
+  const equity = total ? Math.round((wins / total) * 100) : 50;
+
+  // Effective outs derived from equity via rule of 2 & 4.
+  // This automatically discounts "dirty" outs (e.g. pairing the board) because
+  // equity is already simulated against random opponent hands.
+  let outs = null;
+  if (phase === 'flop')      outs = Math.round(equity / 4);
+  else if (phase === 'turn') outs = Math.round(equity / 2);
+
+  return { equity, outs };
+}
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -119,7 +212,12 @@ function buildState() {
     session;
 
   const alive = game.activePlayers();
-  const gameOver = alive.length <= 1;
+  const humanPlayer = game.players[humanIndex];
+  // Treat the human as eliminated as soon as the hand ends with them at 0 chips,
+  // or if they somehow have no cards and no chips (already skipped by startHand).
+  const humanOut = humanPlayer.chips === 0 &&
+    (awaitingNewHand || !humanPlayer.holeCards.length);
+  const gameOver = alive.length <= 1 || humanOut;
   const gameWinner = gameOver && alive.length === 1 ? alive[0].name : null;
 
   const humanAlive = game.players[humanIndex].chips > 0;
@@ -153,6 +251,14 @@ function buildState() {
     };
   });
 
+  const equityData = (!awaitingNewHand && !gameOver && game.phase !== null)
+    ? calcEquityAndOuts(game, humanIndex)
+    : null;
+
+  const allInRunout = !awaitingNewHand && !gameOver &&
+    game.phase !== 'showdown' && game.phase !== null &&
+    game.currentPlayerIndex === -1;
+
   return {
     phase: game.phase,
     pot: game.pot,
@@ -175,6 +281,9 @@ function buildState() {
     gameWinner,
     smallBlind: game.smallBlind,
     bigBlind: game.bigBlind,
+    equity: equityData?.equity ?? null,
+    outs: equityData?.outs ?? null,
+    allInRunout,
   };
 }
 
@@ -221,7 +330,16 @@ function advanceOneStep() {
   const { game } = session;
 
   if (session.awaitingNewHand || game.phase === "showdown") return false;
-  if (game.currentPlayerIndex === -1) return false;
+
+  // All-in runout: no one can bet this street — advance to the next street
+  if (game.currentPlayerIndex === -1) {
+    game.advancePhase();
+    if (game.phase === "showdown") {
+      doShowdown();
+    }
+    return true;
+  }
+
   if (game.currentPlayerIndex === session.humanIndex) return false;
 
   const current = game.players[game.currentPlayerIndex];
@@ -422,9 +540,9 @@ app.post("/api/practice/deal", (req, res) => {
   const hand = handKey(holeCards);
   const chart = charts[scenario.key] || {};
   const raw = chart[hand];
-  const gtoActions = !raw ? ['fold'] : Array.isArray(raw) ? raw : [raw];
+  const correctActions = !raw ? ['fold'] : Array.isArray(raw) ? raw : [raw];
 
-  practiceState = { hand, gtoActions };
+  practiceState = { hand, correctActions };
 
   res.json({
     holeCards: holeCards.map(serializeCard),
@@ -434,16 +552,16 @@ app.post("/api/practice/deal", (req, res) => {
     contextDesc: scenario.contextDesc,
     hand,
     chart,
-    gtoActions,
+    gtoActions: correctActions,
   });
 });
 
 app.post("/api/practice/evaluate", (req, res) => {
   if (!practiceState) return res.status(400).json({ error: "No active practice hand" });
   const { action } = req.body;
-  const { gtoActions } = practiceState;
-  const correct = gtoActions.includes(action);
-  res.json({ correct, gtoActions });
+  const { correctActions } = practiceState;
+  const correct = correctActions.includes(action);
+  res.json({ correct, gtoActions: correctActions });
 });
 
 // ── Competitive Mode ──────────────────────────────────────────────────────────
@@ -498,6 +616,36 @@ app.post('/api/competitive/score', (req, res) => {
   lb[key].sort((a, b) => b.pct - a.pct || b.correct - a.correct || b.date.localeCompare(a.date));
   lb[key] = lb[key].slice(0, 20); // top 20 per level
   saveLeaderboardFile(lb);
+  res.json({ ok: true });
+});
+
+// ── Ranges ────────────────────────────────────────────────────────────────────
+
+const RANGES_PATH = path.join(__dirname, 'ranges.json');
+
+function loadRanges() {
+  try { return JSON.parse(fs.readFileSync(RANGES_PATH, 'utf8')); }
+  catch { return {}; }
+}
+function saveRangesFile(data) {
+  fs.writeFileSync(RANGES_PATH, JSON.stringify(data, null, 2));
+}
+
+// GET /api/ranges/:name  — load all saved ranges for a player
+app.get('/api/ranges/:name', (req, res) => {
+  const name = decodeURIComponent(req.params.name).trim().toLowerCase();
+  res.json(loadRanges()[name] || {});
+});
+
+// POST /api/ranges/:name  — merge/update scenarios for a player
+app.post('/api/ranges/:name', (req, res) => {
+  const name = decodeURIComponent(req.params.name).trim().toLowerCase();
+  const updates = req.body; // { scenarioKey: chartObj, ... }
+  if (!updates || typeof updates !== 'object') return res.status(400).json({ error: 'Invalid body' });
+  const all = loadRanges();
+  if (!all[name]) all[name] = {};
+  Object.assign(all[name], updates);
+  saveRangesFile(all);
   res.json({ ok: true });
 });
 

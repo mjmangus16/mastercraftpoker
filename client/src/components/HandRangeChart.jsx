@@ -1,3 +1,5 @@
+import { useRef, useEffect } from 'react';
+
 const RANKS = ['A', 'K', 'Q', 'J', 'T', '9', '8', '7', '6', '5', '4', '3', '2'];
 
 function cellKey(i, j) {
@@ -7,7 +9,7 @@ function cellKey(i, j) {
 }
 
 function cellColor(action) {
-  if (!action) return null; // fold = default dark bg
+  if (!action) return null;
   const arr = Array.isArray(action) ? action : [action];
   const hasRaise = arr.includes('raise') || arr.includes('allin');
   const hasCall  = arr.includes('call');
@@ -16,31 +18,68 @@ function cellColor(action) {
   if (hasRaise && hasCall)             return 'mixed-rc';
   if (hasRaise)  return 'raise';
   if (hasCall)   return 'call';
-  return null; // fold
+  return null;
 }
 
-export default function HandRangeChart({ chart, highlightHand, onSelectHand }) {
+function normAction(v) {
+  if (v == null) return 'fold';
+  if (Array.isArray(v)) return [...v].sort().join(',');
+  return v;
+}
+
+// onPaintCell(hand) — paint mode (drag to paint multiple cells)
+// onSelectHand(hand) — select mode (click only, for Hand Lookup)
+// baseChart — GTO chart for diff dot comparison
+export default function HandRangeChart({ chart, highlightHand, onSelectHand, onPaintCell, baseChart }) {
+  const dragging = useRef(false);
+
+  useEffect(() => {
+    if (!onPaintCell) return;
+    const stop = () => { dragging.current = false; };
+    window.addEventListener('mouseup', stop);
+    window.addEventListener('touchend', stop);
+    return () => {
+      window.removeEventListener('mouseup', stop);
+      window.removeEventListener('touchend', stop);
+    };
+  }, [onPaintCell]);
+
   return (
     <div className="range-chart">
       <div className="range-grid-wrap">
         <span className="range-so-label range-so-suited">suited ↗</span>
-        <div className="range-grid">
+        <div
+          className="range-grid"
+          style={onPaintCell ? { userSelect: 'none', WebkitUserSelect: 'none' } : undefined}
+        >
           {RANKS.map((_, i) =>
             RANKS.map((_, j) => {
-              const key   = cellKey(i, j);
-              const color = cellColor(chart[key]);
-              const hi    = key === highlightHand;
+              const key    = cellKey(i, j);
+              const color  = cellColor(chart[key]);
+              const hi     = key === highlightHand;
+              const isDiff = baseChart !== undefined &&
+                normAction(chart?.[key]) !== normAction(baseChart?.[key]);
               return (
                 <div
                   key={key}
                   className={[
                     'range-cell',
                     color ? `range-cell--${color}` : '',
-                    hi ? 'range-cell--highlight' : '',
-                    onSelectHand ? 'range-cell--clickable' : '',
+                    hi        ? 'range-cell--highlight'  : '',
+                    isDiff    ? 'range-cell--diff'       : '',
+                    onSelectHand ? 'range-cell--clickable'  : '',
+                    onPaintCell  ? 'range-cell--paintable'  : '',
                   ].filter(Boolean).join(' ')}
                   title={key}
-                  onClick={() => onSelectHand?.(key)}
+                  onMouseDown={onPaintCell ? (e) => {
+                    e.preventDefault();
+                    dragging.current = true;
+                    onPaintCell(key);
+                  } : undefined}
+                  onMouseEnter={onPaintCell ? () => {
+                    if (dragging.current) onPaintCell(key);
+                  } : undefined}
+                  onClick={onSelectHand ? () => onSelectHand(key) : undefined}
                 >
                   {key.replace(/[so]$/, '')}
                 </div>

@@ -238,24 +238,14 @@ class TexasHoldem {
       return;
     }
 
-    // Post-flop: first to act is first active player after dealer
-    this.currentPlayerIndex = this._nextToAct(this.dealerIndex);
-
-    // If only one player can bet (all others all-in or folded), skip betting
+    // If only one (or zero) players can bet, skip betting for this street.
+    // Set currentPlayerIndex = -1 so the server knows to advance automatically.
     const canBet = this.players.filter(p => !p.folded && !p.allIn);
     if (canBet.length <= 1) {
-      // Run out remaining community cards without betting
-      while (this.phase !== 'showdown') {
-        if (this.phase === 'flop') {
-          this.community.push(this.deck.deal());
-          this.phase = 'turn';
-        } else if (this.phase === 'turn') {
-          this.community.push(this.deck.deal());
-          this.phase = 'river';
-        } else if (this.phase === 'river') {
-          this.phase = 'showdown';
-        }
-      }
+      this.currentPlayerIndex = -1;
+    } else {
+      // Post-flop: first to act is first active player after dealer
+      this.currentPlayerIndex = this._nextToAct(this.dealerIndex);
     }
   }
 

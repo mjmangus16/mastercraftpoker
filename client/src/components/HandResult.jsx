@@ -29,9 +29,7 @@ export default function HandResult({ handResult, onNextHand, gameOver, gameWinne
         <p className="modal-subtitle">
           <strong>{winner?.name}</strong> wins ${winner?.amount} — everyone else folded
         </p>
-        <button className="btn btn--call" onClick={onNextHand} disabled={loading}>
-          Next Hand
-        </button>
+        <p className="modal-auto-hint">Next hand starting…</p>
       </div>
     </div>
   );
